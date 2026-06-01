@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Manual Build output
+dist/
+
+# Installer Build output
+dist-installer/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and lockfiles
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
