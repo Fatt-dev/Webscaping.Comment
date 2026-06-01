@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comment Scraping Dashboard</title>
+  <!-- Google Fonts Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">COMMENT SCRAPING</div>
+      <div class="header-author">Made by.Fatt</div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="app-main">
+      
+      <!-- Workspace Left: Active Area (Dynamic based on State: idle, scraping, completed, failed) -->
+      <section class="workspace-left">
+        
+        <!-- State: IDLE (Plus Button to Create Project) -->
+        <div id="view-idle" class="content-view active">
+          <button id="btn-open-create" class="btn-create-project" aria-label="Tambah Proyek Baru">
+            <svg class="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- State: SCRAPING (Hourglass Spinner) -->
+        <div id="view-scraping" class="content-view">
+          <div class="scraping-spinner-container">
+            <div class="spinner-hourglass">
+              <svg viewBox="0 0 24 24" width="96" height="96" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" class="hourglass-svg">
+                <path d="M5 2h14M5 22h14M19 2v3a7 7 0 0 1-7 7 7 7 0 0 1-7-7V2M5 22v-3a7 7 0 0 1 7-7 7 7 0 0 1 7 7v3"></path>
+              </svg>
+            </div>
+            <div class="scraping-status-label">Sedang mengambil komentar...</div>
+            <div class="scraping-cancel-container">
+              <button id="btn-cancel-scraping" class="btn-neo-danger">Batal Scraping</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- State: COMPLETED (Dataset View) -->
+        <div id="view-completed" class="content-view">
+          <div class="dataset-container">
+            <div class="dataset-header">
+              <span class="dataset-title" id="dataset-title-text">Hasil Scraping (Menampilkan 100 Baris Pertama)</span>
+              <div class="dataset-header-controls">
+                <span class="dataset-count" id="dataset-count-badge">0 / 0 Data</span>
+                <button id="btn-back-to-idle" class="btn-neo-header">+ Proyek Baru</button>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table id="comments-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Author</th>
+                    <th>Comment</th>
+                    <th>Platform</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="comments-table-body">
+                  <!-- Data rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- State: FAILED (Error Message) -->
+        <div id="view-failed" class="content-view">
+          <div class="error-view-container">
+            <svg class="error-icon" viewBox="0 0 24 24" width="72" height="72" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div class="error-title">Scraping Gagal</div>
+            <div id="error-message" class="error-desc">Terjadi kesalahan saat mencoba memuat halaman atau mengekstraksi data.</div>
+            <button id="btn-failed-reset" class="btn-neo-secondary">Kembali</button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Workspace Right: Project List (Sidebar) -->
+      <section class="workspace-right">
+        <div class="project-list-header">
+          <div class="project-list-badge">Project List</div>
+        </div>
+        <div id="project-list-items" class="project-list-items">
+          <!-- Sample or stored projects listed here -->
+          <div class="project-list-empty">
+            Belum ada proyek. Klik tombol + untuk memulai.
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Controls & Progress Bar -->
+    <footer class="app-footer">
+      <!-- Normal / Scraping: Progress Bar -->
+      <div id="footer-progress" class="footer-control-panel active">
+        <div class="progress-bar-outer">
+          <div id="progress-bar-fill" class="progress-bar-inner" style="width: 0%"></div>
+          <span id="progress-bar-text" class="progress-bar-text">Menunggu proyek baru...</span>
+        </div>
+      </div>
+
+      <!-- Completed: Download Button -->
+      <div id="footer-download" class="footer-control-panel">
+        <button id="btn-download-dataset" class="btn-download-neo">
+          DOWNLOAD DATASET
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Dialog / Popup Konfigurasi Proyek Baru -->
+  <div id="project-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">Buat Proyek Baru</h2>
+        <button id="btn-modal-close" class="modal-close-btn">&times;</button>
+      </div>
+      
+      <form id="project-form" class="modal-form">
+        <div class="form-group">
+          <label for="input-project-name">Nama Proyek</label>
+          <input type="text" id="input-project-name" placeholder="Masukkan nama proyek..." required>
+        </div>
+
+        <div class="form-group">
+          <label for="input-platform">Media Sosial</label>
+          <select id="input-platform" required>
+            <option value="" disabled selected>Pilih Media Sosial...</option>
+            <option value="youtube">YouTube</option>
+            <option value="tiktok">TikTok</option>
+            <option value="twitter">Twitter / X</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="input-url">Set URL Postingan</label>
+          <input type="url" id="input-url" placeholder="https://example.com/post/..." required>
+          <span id="url-validation-error" class="validation-error-text"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="input-target-count">Banyak data (Target Komentar)</label>
+          <input type="number" id="input-target-count" placeholder="Contoh: 100" min="1" max="10000" required value="100">
+        </div>
+
+        <button type="submit" id="btn-start-scraping" class="btn-submit-neo">
+          Start Scraping
+        </button>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Dialog / Popup Konfirmasi Hapus Proyek -->
+  <div id="delete-modal" class="modal-overlay">
+    <div class="modal-box modal-box-danger">
+      <div class="modal-header">
+        <h2 class="modal-title">Hapus Proyek?</h2>
+        <button id="btn-delete-close" class="modal-close-btn">&times;</button>
+      </div>
+      
+      <div class="modal-body-neo">
+        <p class="delete-warning-text">Apakah Anda yakin ingin menghapus proyek <span id="delete-project-name" style="color: var(--color-danger); font-weight: 800;"></span>?</p>
+        <p class="delete-sub-text">Tindakan ini tidak dapat dibatalkan. Seluruh data konfigurasi dan hasil komentar yang tersimpan akan dihapus permanen.</p>
+        
+        <div class="delete-modal-buttons">
+          <button id="btn-delete-cancel" class="btn-neo-secondary">Batal</button>
+          <button id="btn-delete-confirm" class="btn-neo-danger">Ya, Hapus</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
