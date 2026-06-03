@@ -44,7 +44,8 @@
               </svg>
             </div>
             <div class="scraping-status-label">Sedang mengambil komentar...</div>
-            <div class="scraping-cancel-container">
+            <div class="scraping-cancel-container" style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+              <button id="btn-finish-scraping" class="btn-neo-success">Selesai Scraping</button>
               <button id="btn-cancel-scraping" class="btn-neo-danger">Batal Scraping</button>
             </div>
           </div>
@@ -160,7 +161,12 @@
         </div>
 
         <div class="form-group">
-          <label for="input-target-count">Banyak data (Target Komentar)</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+            <label for="input-target-count">Banyak data (Target Komentar)</label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="chk-unlimited"> Tanpa Batas
+            </label>
+          </div>
           <input type="number" id="input-target-count" placeholder="Contoh: 100" min="1" max="10000" required value="100">
         </div>
 

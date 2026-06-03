@@ -165,8 +165,18 @@ ipcMain.on('start-scraping', (event, config) => {
 
 ipcMain.on('cancel-scraping', () => {
   if (scraperWindow) {
+    scraperWindow.removeAllListeners('close');
     scraperWindow.close();
     scraperWindow = null;
+  }
+  if (mainWindow) {
+    mainWindow.webContents.send('scraping-cancelled');
+  }
+});
+
+ipcMain.on('finish-scraping', () => {
+  if (scraperWindow) {
+    scraperWindow.webContents.send('stop-scraper');
   }
 });
 

@@ -9,6 +9,7 @@
   --color-dark: #1a1a1a;
   --color-gray-light: #f5f5f5;
   --color-danger: #ff4d4d;
+  --color-success: #2ecc71;
   
   --border-thick: 4px solid var(--color-dark);
   --border-thin: 2px solid var(--color-dark);
@@ -824,4 +825,74 @@ tr:nth-child(even) {
   align-items: center;
   justify-content: center;
   min-width: 100px;
+}
+
+/* Neo-Brutalist Success Button Styling */
+.btn-neo-success {
+  background-color: var(--color-success);
+  color: var(--color-white);
+  border: var(--border-thin);
+  border-radius: 12px;
+  padding: 10px 25px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0px var(--color-dark);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.btn-neo-success:hover {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+/* Custom Neo-Brutalist Checkbox Styling */
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--color-white);
+  text-shadow: 1px 1px 0px var(--color-dark);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-white);
+  border: var(--border-thin);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 1.5px 1.5px 0px var(--color-dark) !important;
+  outline: none;
+  transition: transform 0.1s, box-shadow 0.1s;
+  margin: 0 !important;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  background-color: var(--color-blue);
+}
+
+.checkbox-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid var(--color-white);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-label input[type="checkbox"]:hover {
+  transform: scale(1.05);
 }

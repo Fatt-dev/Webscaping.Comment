@@ -10,7 +10,7 @@ let stopRequested = false;
 
 // IPC Listener to configure target and platform
 ipcRenderer.on('init-scraper', (event, config) => {
-  targetCount = config.targetCount || 100;
+  targetCount = (config.targetCount !== undefined && config.targetCount !== null) ? config.targetCount : 100;
   platform = config.platform || 'youtube';
   console.log(`[Scraper] Initialized for ${platform} aiming for ${targetCount} comments.`);
   
@@ -29,7 +29,9 @@ async function startScrapingLoop() {
   // Initial page load delay
   await sleep(3000);
   
-  while (!stopRequested && scrapedData.size < targetCount) {
+  const isUnlimited = targetCount <= 0;
+  
+  while (!stopRequested && (isUnlimited || scrapedData.size < targetCount)) {
     // Wait for content to load and render as the user scrolls
     await sleep(1500);
     
@@ -39,13 +41,13 @@ async function startScrapingLoop() {
     // Add to our persistent store
     currentChunk.forEach(item => {
       const uniqueKey = `${item.author}::${item.comment}`;
-      if (!scrapedData.has(uniqueKey) && scrapedData.size < targetCount) {
+      if (!scrapedData.has(uniqueKey) && (isUnlimited || scrapedData.size < targetCount)) {
         scrapedData.set(uniqueKey, item);
       }
     });
 
     const currentCount = scrapedData.size;
-    console.log(`[Scraper] Progress: ${currentCount}/${targetCount}`);
+    console.log(`[Scraper] Progress: ${currentCount}/${isUnlimited ? 'Unlimited' : targetCount}`);
 
     // Send progress chunk back to main process
     const commentsList = Array.from(scrapedData.values()).map((c, index) => ({
@@ -59,7 +61,7 @@ async function startScrapingLoop() {
       targetCount: targetCount
     });
     
-    if (scrapedData.size >= targetCount) {
+    if (!isUnlimited && scrapedData.size >= targetCount) {
       console.log('[Scraper] Stopped. Reached target count.');
       break;
     }

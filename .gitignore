@@ -1,19 +1,54 @@
-# Dependencies
+# Dependency Directories
 node_modules/
+jspm_packages/
+web_modules/
 
-# Manual Build output
+# Production/Build Output Directories
 dist/
-
-# Installer Build output
 dist-installer/
+out/
+build/
+release/
 
-# OS files
+# Operating System Files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Logs and lockfiles
+# IDEs and Editors
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvsca
+*.njsproj
+*.sln
+*.sw?
+
+# Logs and Diagnostics
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Diagnostic/Testing Reports
+.nyc_output
+coverage/
+.tap
+.spec
+
+# Environment and Credentials
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.env.*

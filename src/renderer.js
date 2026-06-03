@@ -8,6 +8,7 @@ const inputProjectName = document.getElementById('input-project-name');
 const inputPlatform = document.getElementById('input-platform');
 const inputUrl = document.getElementById('input-url');
 const inputTargetCount = document.getElementById('input-target-count');
+const chkUnlimited = document.getElementById('chk-unlimited');
 const urlValidationError = document.getElementById('url-validation-error');
 
 const viewIdle = document.getElementById('view-idle');
@@ -16,6 +17,7 @@ const viewCompleted = document.getElementById('view-completed');
 const viewFailed = document.getElementById('view-failed');
 
 const btnCancelScraping = document.getElementById('btn-cancel-scraping');
+const btnFinishScraping = document.getElementById('btn-finish-scraping');
 const btnFailedReset = document.getElementById('btn-failed-reset');
 const btnDownloadDataset = document.getElementById('btn-download-dataset');
 const btnBackToIdle = document.getElementById('btn-back-to-idle');
@@ -139,7 +141,11 @@ function selectProject(project) {
   if (project.status === 'completed') {
     switchState('completed');
     datasetTitleText.textContent = `Hasil Proyek: ${project.name} (Tabel 100 Baris Pertama)`;
-    datasetCountBadge.textContent = `${project.comments.length} / ${project.targetCount} Komentar`;
+    if (project.targetCount <= 0) {
+      datasetCountBadge.textContent = `${project.comments.length} Komentar (Tanpa Batas)`;
+    } else {
+      datasetCountBadge.textContent = `${project.comments.length} / ${project.targetCount} Komentar`;
+    }
     populateTable(project.comments);
   } else if (project.status === 'failed') {
     switchState('failed');
@@ -253,7 +259,7 @@ async function handleStartScraping(name, platform, url, targetCount) {
     name: name,
     platform: platform,
     url: url,
-    targetCount: parseInt(targetCount) || 100,
+    targetCount: parseInt(targetCount),
     status: 'scraping',
     comments: [],
     dateCreated: new Date().toISOString()
@@ -272,7 +278,11 @@ async function handleStartScraping(name, platform, url, targetCount) {
 
   // Switch UI to scraping
   switchState('scraping');
-  progressBarText.textContent = `Memulai scraping: 0 / ${newProject.targetCount} Komentar`;
+  if (newProject.targetCount <= 0) {
+    progressBarText.textContent = `Memulai scraping: 0 Komentar (Tanpa Batas)`;
+  } else {
+    progressBarText.textContent = `Memulai scraping: 0 / ${newProject.targetCount} Komentar`;
+  }
   progressBarFill.style.width = '0%';
 
   // Trigger main process scraper window
@@ -291,10 +301,15 @@ const removeProgressListener = window.api.onScrapingProgress((data) => {
 
   const current = data.currentCount;
   const target = data.targetCount;
-  const percent = Math.min(Math.round((current / target) * 100), 100);
 
-  progressBarFill.style.width = `${percent}%`;
-  progressBarText.textContent = `MENGAMBIL DATA: ${current} / ${target} KOMENTAR (${percent}%)`;
+  if (target <= 0) {
+    progressBarFill.style.width = `100%`;
+    progressBarText.textContent = `MENGAMBIL DATA: ${current} KOMENTAR (TANPA BATAS)`;
+  } else {
+    const percent = Math.min(Math.round((current / target) * 100), 100);
+    progressBarFill.style.width = `${percent}%`;
+    progressBarText.textContent = `MENGAMBIL DATA: ${current} / ${target} KOMENTAR (${percent}%)`;
+  }
   
   // Cache current comments in memory
   currentScrapingComments = data.comments;
@@ -321,9 +336,33 @@ const removeCompletedListener = window.api.onScrapingCompleted(async (finalComme
   // Update Workspace to show table
   switchState('completed');
   datasetTitleText.textContent = `Hasil Proyek: ${activeProject.name} (Tabel 100 Baris Pertama)`;
-  datasetCountBadge.textContent = `${finalComments.length} / ${activeProject.targetCount} Komentar`;
+  if (activeProject.targetCount <= 0) {
+    datasetCountBadge.textContent = `${finalComments.length} Komentar (Tanpa Batas)`;
+  } else {
+    datasetCountBadge.textContent = `${finalComments.length} / ${activeProject.targetCount} Komentar`;
+  }
   
   populateTable(finalComments);
+});
+
+// Listen for scraping cancellation
+const removeCancelledListener = window.api.onScrapingCancelled(async () => {
+  if (!activeProject || activeProject.status !== 'scraping') return;
+
+  const cancelledProjectId = activeProject.id;
+  activeProject = null;
+
+  // Delete the project from database since it was cancelled
+  try {
+    projects = await window.api.deleteProject(cancelledProjectId);
+    renderProjectsList();
+  } catch (err) {
+    console.error('Failed to delete cancelled project:', err);
+  }
+
+  switchState('idle');
+  progressBarText.textContent = 'Scraping dibatalkan';
+  progressBarFill.style.width = '0%';
 });
 
 // Listen for scraping errors
@@ -348,6 +387,15 @@ function setupEventListeners() {
   btnOpenCreate.addEventListener('click', () => {
     projectForm.reset();
     urlValidationError.style.display = 'none';
+    
+    // Ensure inputs are correctly reset to default state
+    chkUnlimited.checked = false;
+    inputTargetCount.disabled = false;
+    inputTargetCount.required = true;
+    inputTargetCount.value = '100';
+    inputTargetCount.placeholder = 'Contoh: 100';
+    inputTargetCount.style.opacity = '1';
+
     projectModal.classList.add('active');
     inputProjectName.focus();
   });
@@ -360,6 +408,23 @@ function setupEventListeners() {
   projectModal.addEventListener('click', (e) => {
     if (e.target === projectModal) {
       projectModal.classList.remove('active');
+    }
+  });
+
+  // Checkbox Unlimited toggle
+  chkUnlimited.addEventListener('change', () => {
+    if (chkUnlimited.checked) {
+      inputTargetCount.disabled = true;
+      inputTargetCount.required = false;
+      inputTargetCount.value = '';
+      inputTargetCount.placeholder = 'Tanpa Batas';
+      inputTargetCount.style.opacity = '0.7';
+    } else {
+      inputTargetCount.disabled = false;
+      inputTargetCount.required = true;
+      inputTargetCount.value = '100';
+      inputTargetCount.placeholder = 'Contoh: 100';
+      inputTargetCount.style.opacity = '1';
     }
   });
 
@@ -384,7 +449,8 @@ function setupEventListeners() {
     const name = inputProjectName.value.trim();
     const platform = inputPlatform.value;
     const url = inputUrl.value.trim();
-    const count = inputTargetCount.value;
+    const isUnlimited = chkUnlimited.checked;
+    const count = isUnlimited ? 0 : parseInt(inputTargetCount.value);
 
     if (!validateUrl(platform, url)) {
       return; // Stop if invalid URL
@@ -394,12 +460,16 @@ function setupEventListeners() {
     handleStartScraping(name, platform, url, count);
   });
 
+  // Finish scraping process
+  btnFinishScraping.addEventListener('click', () => {
+    window.api.finishScraping();
+  });
+
   // Cancel scraping process
   btnCancelScraping.addEventListener('click', () => {
-    window.api.cancelScraping();
-    // It will trigger scraper window close, which fires the 'close' event in main.js
-    // which then sends 'scraping-completed' with whatever data we got.
-    // So the app transitions naturally to completed state with whatever comments were scraped.
+    if (confirm('Apakah Anda yakin ingin membatalkan scraping? Seluruh data komentar yang telah dikumpulkan dalam sesi ini akan dihapus.')) {
+      window.api.cancelScraping();
+    }
   });
 
   // Reset Failed View
